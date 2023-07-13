@@ -40,24 +40,24 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// self.addEventListener('fetch', (event) => {
-//   event.respondWith(
-//     caches.match(event.request).then((response) => {
-//       return response || fetch(event.request)
-//     })
-//   )
-// })
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request)
+    })
+  )
+})
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') { return }
-  if (networkFirstFiles.indexOf(event.request.url) !== -1) {
-    event.respondWith(networkElseCache(event));
-  } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
-    event.respondWith(cacheElseNetwork(event));
-  } else {
-    event.respondWith(fetch(event.request));
-  }
-});
+// self.addEventListener('fetch', event => {
+//   if (event.request.method !== 'GET') { return }
+//   if (networkFirstFiles.indexOf(event.request.url) !== -1) {
+//     event.respondWith(networkElseCache(event));
+//   } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
+//     event.respondWith(cacheElseNetwork(event));
+//   } else {
+//     event.respondWith(fetch(event.request));
+//   }
+// });
 
 
 self.addEventListener('push', (event) => {
