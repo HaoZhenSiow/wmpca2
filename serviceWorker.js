@@ -40,24 +40,16 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request)
-    })
-  )
-})
-
-// self.addEventListener('fetch', event => {
-//   if (event.request.method !== 'GET') { return }
-//   if (networkFirstFiles.indexOf(event.request.url) !== -1) {
-//     event.respondWith(networkElseCache(event));
-//   } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
-//     event.respondWith(cacheElseNetwork(event));
-//   } else {
-//     event.respondWith(fetch(event.request));
-//   }
-// });
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') { return }
+  if (networkFirstFiles.indexOf(event.request.url) !== -1) {
+    event.respondWith(networkElseCache(event));
+  } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
+    event.respondWith(cacheElseNetwork(event));
+  } else {
+    event.respondWith(fetch(event.request));
+  }
+});
 
 
 self.addEventListener('push', (event) => {
@@ -66,11 +58,6 @@ self.addEventListener('push', (event) => {
         options = {
           body: notificationText,
           icon: '/favicon_package/android-chrome-512x512.png'
-          // vibrate: [100, 50, 100],
-          // data: {
-          //   dateOfArrival: Date.now(),
-          //   primaryKey: 1
-          // }
         }
   send_message_to_all_clients(notificationText)
   self.registration.showNotification(title, options)
@@ -85,34 +72,27 @@ self.addEventListener('notificationclick', (event) => {
   )
 })
 
-function cacheElseNetwork (event) {
-  return caches.match(event.request).then(response => {
-    function fetchAndCache () {
-       return fetch(event.request).then(response => {
-        // Update cache.
-        caches.open(version).then(cache => cache.put(event.request, response.clone()));
-        return response;
-      });
-    }
+async function cacheElseNetwork(event) {
+  const cachedFile = await caches.match(event.request)
+  
+  if (!cachedFile) { return await fetchAndCache(event) }
 
-    // If not exist in cache, fetch.
-    if (!response) { return fetchAndCache(); }
-
-    // If exists in cache, return from cache while updating cache in background.
-    fetchAndCache();
-    return response;
-  });
+  fetchAndCache(event)
+  return cachedFile
 }
 
-function networkElseCache (event) {
-  return caches.match(event.request).then(match => {
-    if (!match) { return fetch(event.request); }
-    return fetch(event.request).then(response => {
-      // Update cache.
-      caches.open(version).then(cache => cache.put(event.request, response.clone()));
-      return response;
-    }) || response;
-  });
+async function networkElseCache(event) {
+  const response = await fetchAndCache(event)
+  return response.ok ? response : await caches.match(event.request)
+}
+
+async function fetchAndCache(event) {
+  const response = await fetch(event.request)
+  if (response.ok) {
+    const cache = await caches.open(version)
+    cache.put(event.request, response.clone())
+  }
+  return response
 }
 
 function send_message_to_client(client, msg) {
