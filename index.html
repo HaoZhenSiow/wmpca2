@@ -24,7 +24,7 @@
 </body>
 <script>
   window.onload = function(){
-    fetch('http://inec.sg/assignment/retrieve_records.php', {mode: 'cors'})
+    fetch('http://inec.sg/assignment/retrieve_records.php')
       .then(res => res.json())
       .then(data => {
         localStorage.setItem('travelPackages', JSON.stringify(data))

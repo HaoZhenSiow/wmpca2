@@ -1,4 +1,4 @@
-const version = 'v1'
+const version = 'v2'
 
 const cacheFirstFiles = [
   '/favicon_package/apple-touch-icon.png',
@@ -6,12 +6,10 @@ const cacheFirstFiles = [
   '/favicon_package/favicon-16x16.png',
   '/favicon_package/safari-pinned-tab.svg',
   '/favicon_package/android-chrome-192x192.png',
-  // '/assignment/images/cambodia.jpg',
-  // '/assignment/images/korea.jpg',
-  // '/assignment/images/exotic.jpg',
 ]
 
 const networkFirstFiles = [
+  '/',
   '/index.html',
   '/marker.html',
   '/package.html',
@@ -46,24 +44,27 @@ self.addEventListener('activate', (event) => {
 
 // self.addEventListener('fetch', (event) => {
 //   event.respondWith(
-//     caches.match(event.request).then((response) => {
+//     caches.match(event.request).then(response => {
 //       return response || fetch(event.request)
 //     })
 //   )
 // })
 
 self.addEventListener('fetch', event => {
-  const pathname = new URL(event.request.url).pathname
-  if (event.request.method !== 'GET') { return }
-  if (networkFirstFiles.indexOf(pathname) !== -1) {
+  const { pathname } = new URL(event.request.url)
+  
+  if (event.request.method !== 'GET') {
+    return
+  }
+  
+  if (networkFirstFiles.includes(pathname)) {
     event.respondWith(networkElseCache(event))
-  } else if (cacheFirstFiles.indexOf(pathname) !== -1) {
+  } else if (cacheFirstFiles.includes(pathname)) {
     event.respondWith(cacheElseNetwork(event))
   } else {
-    event.respondWith(fetch(event.request))
+    event.respondWith(fetch(event.request).catch(() => {return}))
   }
-});
-
+})
 
 self.addEventListener('push', (event) => {
   const title = 'Travel Packages',
@@ -86,55 +87,34 @@ self.addEventListener('notificationclick', (event) => {
 })
 
 async function cacheElseNetwork(event) {
-  return await caches.match(event.request).then(cachedFile => {
-    fetchAndCache(event)
-    return cachedFile
-  }).catch(async () => {
-    return await fetchAndCache(event)
-  })
+  const cachedFile = await caches.match(event.request);
+  
+  if (cachedFile) {
+    fetchAndCache(event).catch(() => {return})
+    return cachedFile;
+  }
+  
+  return fetchAndCache(event);
 }
 
-function networkElseCache(event) {
-  const pathname = new URL(event.request.url).pathname
-  // send_message_to_all_clients(pathname)
-  const response = fetchAndCache(event).then(res => {
-    // send_message_to_all_clients(res.ok)
-  })
-  const result = response.ok ? response : caches.match(event.request)
-  
-  return result
+async function networkElseCache(event) {
+  try {
+    return await fetchAndCache(event);
+  } catch (error) {
+    return caches.match(event.request);
+  }
 }
 
 async function fetchAndCache(event) {
-  const pathname = new URL(event.request.url).pathname
-  send_message_to_all_clients(pathname)
-  return await fetch(event.request).then(response => {
-    if (response.ok) {
-      send_message_to_all_clients('caching: ' + pathname)
-      caches.open(version).then(cache => {
-        cache.put(event.request, response.clone())
-      })
-    }
-    return response
-  })
+  const response = await fetch(event.request);
+  
+  if (response.ok) {
+    const cache = await caches.open(version);
+    await cache.put(event.request, response.clone());
+  }
+  
+  return response;
 }
-
-// function getCleanRequest(request) {
-//   const url = new URL(request.url);
-//   url.search = ''
-//   url.fragment = ''
-
-//   let cleanRequest = new Request(url, {
-//     method: request.method,
-//     headers: request.headers,
-//     mode: request.mode,
-//     credentials: request.credentials,
-//     cache: request.cache,
-//     redirect: request.redirect,
-//     referrer: request.referrer,
-//     integrity: request.integrity,
-//   });
-// }
 
 function send_message_to_client(client, msg) {
   return new Promise((resolve, reject) => {
