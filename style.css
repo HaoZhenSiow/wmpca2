@@ -1,0 +1,73 @@
+body {
+  background-color: grey;
+  color: snow;
+  margin: 0;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: black;
+  padding-inline: 1em;
+}
+
+header p {
+  font-size: xx-large;
+}
+
+#packages:has(#noPackage) {
+  display: grid;
+  place-content: center;
+  height: 70vh;
+}
+
+#noPackage {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.package {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid snow;
+  padding: 1em;
+  color: snow;
+  text-decoration: none;
+}
+
+.package-info {
+  margin-left: 1em;
+}
+
+#package {
+  max-width: 700px;
+  margin-inline: auto;
+  padding: 1.5em;
+  text-align: center;
+}
+
+#package-details {
+  display: flex;
+  justify-content: space-around;
+}
+
+#package-details div b {
+  font-size: 1.5em;
+}
+
+footer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding-block: 1em;
+  font-size: 2em;
+  background-color: black;
+}
+
+footer a {
+  color: snow;
+  text-decoration: none;
+}

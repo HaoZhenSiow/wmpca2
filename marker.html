@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon_package/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon_package/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon_package/favicon-16x16.png">
+  <link rel="mask-icon" href="/favicon_package/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <script src="https://maps.googleapis.com/maps/api/js"></script>
+  <title>Travel Packages | Home</title>
+</head>
+<body>
+  <header>
+    <h1 id="tourName">No Package Found</h1>
+  </header>
+  <div id="gmap">
+    Turn online to use google map
+  </div>
+</body>
+<script>
+  window.onload = function(){
+    const queryString = window.location.search,
+          urlParams = new URLSearchParams(queryString),
+          tour = urlParams.get('name'),
+          headerHeight = document.querySelector('header').getBoundingClientRect().height,
+          locations = {
+            '4DAYS CLASSIC CAMBODIA': { lat: 11.568, lng: 104.912 } ,
+            '8D6N Pleasant Korea & Busan': { lat: 36.5, lng: 128 } ,
+            '13D10N BALKAN DREAMS': { lat: 40.916, lng: 10.982 }
+          },
+          center = locations[tour] || { lat: 1.355, lng: 103.8 },
+          markers = localStorage.getItem('markers') ? JSON.parse(localStorage.getItem('markers')) : {}
+  
+    document.querySelector('#tourName').innerHTML = tour     
+    document.querySelector('#gmap').style.height = innerHeight - headerHeight + 'px'
+    
+    window.ononline = initMap(center)
+
+    function initMap(center) {
+      let map = new google.maps.Map(document.getElementById('gmap'), {
+        center,
+        zoom: 7
+      })
+
+      markers[tour] = markers[tour] ? new Set(markers[tour]) : new Set()
+
+      markers[tour].forEach(marker => {
+        const title = marker.split(' ')[0],
+              position = {lat: parseFloat(marker.split(' ')[1]), lng: parseFloat(marker.split(' ')[2])}
+        createMarker({ map, title, position })
+      })
+
+      map.addListener('click', e => {
+        const title = prompt('Enter Marker Map')
+        markers[tour].add(title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
+        localStorage.setItem('markers', stringifyMarkers(markers))
+        createMarker({ map, title, position: e.latLng })
+      })
+      
+    }
+
+    function createMarker(payload) {
+      const marker = new google.maps.Marker(payload)
+      marker.addListener('click', function(e) {
+        markers[tour].delete(payload.title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
+        localStorage.setItem('markers', stringifyMarkers(markers))
+        this.setMap(null)
+      })
+    }
+    
+    function stringifyMarkers(markers) {
+      const clone = structuredClone(markers)
+      for (let location in clone) {
+        clone[location] = [...clone[location]]
+      }
+      return JSON.stringify(clone)
+    }
+    
+  }
+</script>
+<script src="loadSW.js"></script>
+</html>

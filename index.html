@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon_package/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon_package/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon_package/favicon-16x16.png">
+  <link rel="mask-icon" href="/favicon_package/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <title>Travel Packages | Home</title>
+</head>
+<body>
+  <header>
+    <h1>Travel Packages</h1>
+    <p id="lastModified"></p>
+  </header>
+  <div id="packages">
+   <p id="noPackage">Loading...</p>
+  </div>
+</body>
+<script>
+  window.onload = function(){
+    fetch('http://inec.sg/assignment/retrieve_records.php')
+      .then(res => res.json())
+      .then(data => {
+        localStorage.setItem('travelPackages', JSON.stringify(data))
+        updateIndex(data)
+      })
+      .catch(() => {
+        const travelPackages = localStorage.getItem('travelPackages')
+        if (travelPackages) {
+          const data = JSON.parse(travelPackages)
+          updateIndex(data)
+        } else {
+          document.querySelector('#noPackage').innerHTML = 'No Package Found'
+        }
+      })
+  }
+
+  function updateIndex({ packages, last_update }) {
+    let packagesStr = ''
+
+    packages.forEach((package, index) => {
+      packagesStr += `
+        <a href="package.html?id=${index}" class="package">
+          <img src="${package.image}" alt="${package.name}">
+          <div class="package-info">
+            <h2>${package.name}</h2>
+            <p>$${package.price}</p>
+          </div>
+        </a>
+      `
+    })
+
+    document.getElementById('lastModified').innerHTML = formatDate(last_update)
+    document.querySelector('#packages').innerHTML = packagesStr
+  }
+
+  function formatDate(input) {
+    const date = new Date(input),
+          options = {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            hour12: false
+          },
+          formattedDate = date.toLocaleString('en-US', options)
+                              .toUpperCase()
+                              .replaceAll(',', ''),
+          arr = formattedDate.split(' ')
+    
+    return arr[1] + '-' + arr[0] + '-' + arr[2] + ' ' + arr[3]
+  }
+</script>
+<script src="loadSW.js"></script>
+</html>
