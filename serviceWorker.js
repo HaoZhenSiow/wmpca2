@@ -85,30 +85,23 @@ self.addEventListener('notificationclick', (event) => {
   )
 })
 
-function cacheElseNetwork(event) {
-  return caches.match(event.request).then(cachedFile => {
+async function cacheElseNetwork(event) {
+  return await caches.match(event.request).then(cachedFile => {
     fetchAndCache(event)
     return cachedFile
-  }).catch(() => {
-    fetchAndCache(event)
+  }).catch(async () => {
+    return await fetchAndCache(event)
   })
 }
 
 function networkElseCache(event) {
   const pathname = new URL(event.request.url).pathname
-  // caches.match(event.request).then(response => {
-  //   send_message_to_all_clients(response)
-  // }).catch(() => {
-  //   send_message_to_all_clients('nothinbh')
-  // }).finally(() => {
-  //   send_message_to_all_clients('nothinbh')
-  // })
-  
+  // send_message_to_all_clients(pathname)
   const response = fetchAndCache(event).then(res => {
-    // send_message_to_all_clients('result')
+    // send_message_to_all_clients(res.ok)
   })
   const result = response.ok ? response : caches.match(event.request)
-  send_message_to_all_clients(result)
+  
   return result
 }
 
@@ -116,15 +109,13 @@ async function fetchAndCache(event) {
   const pathname = new URL(event.request.url).pathname
   send_message_to_all_clients(pathname)
   return await fetch(event.request).then(response => {
-    send_message_to_all_clients(pathname + ': ' +response.ok)
     if (response.ok) {
+      send_message_to_all_clients('caching: ' + pathname)
       caches.open(version).then(cache => {
         cache.put(event.request, response.clone())
       })
     }
     return response
-  }).catch(() => {
-    send_message_to_all_clients('nothinbh')
   })
 }
 
