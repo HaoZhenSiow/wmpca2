@@ -71,7 +71,10 @@ self.addEventListener('push', (event) => {
         notificationText = event.data ? event.data.text() : 'notification text'
         options = {
           body: notificationText,
-          icon: '/favicon_package/android-chrome-512x512.png'
+          icon: '/favicon_package/android-chrome-512x512.png',
+          data: {
+            url: self.location.origin
+          }
         }
   send_message_to_all_clients(notificationText)
   self.registration.showNotification(title, options)
@@ -81,8 +84,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(
-    // clients.openWindow(event.notification.data.url)
-    clients.openWindow("http://localhost:5500/")
+    clients.openWindow(event.notification.data.url)
   )
 })
 
