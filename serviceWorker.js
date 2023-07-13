@@ -40,16 +40,24 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') { return }
-  if (networkFirstFiles.indexOf(event.request.url) !== -1) {
-    event.respondWith(networkElseCache(event));
-  } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
-    event.respondWith(cacheElseNetwork(event));
-  } else {
-    event.respondWith(fetch(event.request));
-  }
-});
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request)
+    })
+  )
+})
+
+// self.addEventListener('fetch', event => {
+//   if (event.request.method !== 'GET') { return }
+//   if (networkFirstFiles.indexOf(event.request.url) !== -1) {
+//     event.respondWith(networkElseCache(event));
+//   } else if (cacheFirstFiles.indexOf(event.request.url) !== -1) {
+//     event.respondWith(cacheElseNetwork(event));
+//   } else {
+//     event.respondWith(fetch(event.request));
+//   }
+// });
 
 
 self.addEventListener('push', (event) => {
@@ -72,27 +80,29 @@ self.addEventListener('notificationclick', (event) => {
   )
 })
 
-async function cacheElseNetwork(event) {
-  const cachedFile = await caches.match(event.request)
-  
-  if (!cachedFile) { return await fetchAndCache(event) }
-
-  fetchAndCache(event)
-  return cachedFile
+function cacheElseNetwork(event) {
+  return caches.match(event.request).then(cachedFile => {
+    fetchAndCache(event)
+    return cachedFile
+  }).catch(() => {
+    fetchAndCache(event)
+  })
 }
 
-async function networkElseCache(event) {
-  const response = await fetchAndCache(event)
-  return response.ok ? response : await caches.match(event.request)
+function networkElseCache(event) {
+  const response = fetchAndCache(event)
+  return response.ok ? response : caches.match(event.request)
 }
 
-async function fetchAndCache(event) {
-  const response = await fetch(event.request)
-  if (response.ok) {
-    const cache = await caches.open(version)
-    cache.put(event.request, response.clone())
-  }
-  return response
+function fetchAndCache(event) {
+  fetch(event.request).then(response => {
+    if (response.ok) {
+      caches.open(version).then(cache => {
+        cache.put(event.request, response.clone())
+      })
+    }
+    return response
+  })
 }
 
 function send_message_to_client(client, msg) {
