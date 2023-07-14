@@ -35,43 +35,52 @@
     } else {
       fetch('http://inec.sg/assignment/retrieve_records.php')
         .then(res => res.json())
-        .then(data => updatePackageUI(data, id))
+        .then(data => {
+          localStorage.setItem('travelPackages', JSON.stringify(data))
+          updatePackageUI(data, id)
+        })
         .catch(() => {
-          document.querySelector('#noPackage').innerHTML = 'No Package Found'
+          document.querySelector('#noPackage').innerHTML = 'Please turn on the internet connection'
         })
       
     }
 
     function updatePackageUI(travelPackages, id) {
-      const { packages } = travelPackages,
-            { artiste, duration, image, name, price, theme } = packages[id]
-      document.querySelector('#tourName').innerHTML = name
-      document.querySelector('#packages').innerHTML = `
-        <div id="package">
-          <img src="${image}" alt="${name}">
-          <div id="package-details">
-            <div>
-              <p>Theme</p>
-              <b>${theme}</b>
+      const { packages } = travelPackages
+
+      if (packages[id]) {
+        const{ artiste, duration, image, name, price, theme } = packages[id]
+
+        document.querySelector('#tourName').innerHTML = name
+        document.querySelector('#packages').innerHTML = `
+          <div id="package">
+            <img src="${image}" alt="${name}">
+            <div id="package-details">
+              <div>
+                <p>Theme</p>
+                <b>${theme}</b>
+              </div>
+              <div>
+                <p>Artiste Included</p>
+                <b>${artiste}</b>
+              </div>
+              <div>
+                <p>Duration</p>
+                <b>${duration} days</b>
+              </div>
+              <div>
+                <p>Price</p>
+                <b>$${price}</b>
+              </div>  
             </div>
-            <div>
-              <p>Artiste Included</p>
-              <b>${artiste}</b>
-            </div>
-            <div>
-              <p>Duration</p>
-              <b>${duration} days</b>
-            </div>
-            <div>
-              <p>Price</p>
-              <b>$${price}</b>
-            </div>  
           </div>
-        </div>
-      `
-      document.querySelector('footer').innerHTML = `
-        <a href="marker.html?name=${encodeURI(name).replaceAll('&', '%26')}">INDICATE PLACES OF INTEREST =></a>
-      `
+        `
+        document.querySelector('footer').innerHTML = `
+          <a href="marker.html?name=${encodeURI(name).replaceAll('&', '%26')}">INDICATE PLACES OF INTEREST =></a>
+        `
+      } else {
+        document.querySelector('#noPackage').innerHTML = 'No Package Found'
+      }
     }
     
   }
