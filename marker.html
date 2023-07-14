@@ -38,8 +38,10 @@
   
     document.querySelector('#tourName').innerHTML = tour     
     document.querySelector('#gmap').style.height = innerHeight - headerHeight + 'px'
-    
-    window.ononline = initMap(center)
+
+    // navigator.online && initMap(center)
+
+    navigator.onLine && initMap(center)
 
     function initMap(center) {
       let map = new google.maps.Map(document.getElementById('gmap'), {

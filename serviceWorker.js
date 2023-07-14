@@ -20,44 +20,32 @@ const networkFirstFiles = [
 
 const cacheFiles = cacheFirstFiles.concat(networkFirstFiles)
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(version).then((cache) => {
-      return cache.addAll(cacheFiles)
-    })
-    .then(self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(version)
+      cache.addAll(cacheFiles)
+      return self.skipWaiting()
+    })()
   )
 })
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== version) {
-          return caches.delete(key)
-        }
-      }))
-    })
-    .then(self.clients.claim())
+    (async () => {
+      const keys = await caches.keys()
+      keys.forEach(async (key) => await deleteKey(key))
+      return self.clients.claim()
+    })()
   )
 })
-
-// self.addEventListener('fetch', (event) => {
-//   event.respondWith(
-//     caches.match(event.request).then(response => {
-//       return response || fetch(event.request)
-//     })
-//   )
-// })
 
 self.addEventListener('fetch', event => {
   const { pathname } = new URL(event.request.url)
   
   if (event.request.method !== 'GET') {
     return
-  }
-  
-  if (networkFirstFiles.includes(pathname)) {
+  } else if (networkFirstFiles.includes(pathname)) {
     event.respondWith(networkElseCache(event))
   } else if (cacheFirstFiles.includes(pathname)) {
     event.respondWith(cacheElseNetwork(event))
@@ -66,7 +54,7 @@ self.addEventListener('fetch', event => {
   }
 })
 
-self.addEventListener('push', (event) => {
+self.addEventListener('push', event => {
   const title = 'Travel Packages',
         notificationText = event.data ? event.data.text() : 'notification text'
         options = {
@@ -80,63 +68,52 @@ self.addEventListener('push', (event) => {
   self.registration.showNotification(title, options)
 })
 
-// when click on the notification, close the notification and open the page
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', event => {
   event.notification.close()
   event.waitUntil(
     clients.openWindow(event.notification.data.url)
   )
 })
 
-async function cacheElseNetwork(event) {
-  const cachedFile = await caches.match(event.request);
-  
-  if (cachedFile) {
-    fetchAndCache(event).catch(() => {return})
-    return cachedFile;
+async function deleteKey(key) {
+  if (key !== version) {
+    await caches.delete(key)
   }
+}
+
+async function cacheElseNetwork(event) {
+  const cachedFile = await caches.match(event.request, { ignoreSearch: true })
   
-  return fetchAndCache(event);
+  if (!cachedFile) return fetchAndCache(event)
+
+  fetchAndCache(event).catch(() => {return})
+  return cachedFile
 }
 
 async function networkElseCache(event) {
   try {
-    return await fetchAndCache(event);
+    return await fetchAndCache(event)
   } catch (error) {
-    return caches.match(event.request);
+    return caches.match(event.request, { ignoreSearch: true });
   }
 }
 
 async function fetchAndCache(event) {
-  const response = await fetch(event.request);
+  const {pathname } = new URL(event.request.url),
+        response = await fetch(event.request)
   
   if (response.ok) {
-    const cache = await caches.open(version);
-    await cache.put(event.request, response.clone());
+    const cache = await caches.open(version)
+    cache.put(pathname, response.clone())
   }
   
-  return response;
-}
-
-function send_message_to_client(client, msg) {
-  return new Promise((resolve, reject) => {
-    const msg_chan = new MessageChannel()
-
-    msg_chan.port1.onmessage = event => {
-      if (event.data.error) {
-        reject(event.data.error)
-      } else {
-        resolve(event.data)
-      }
-    }
-    
-    client.postMessage(msg, [msg_chan.port2])
-  })
+  return response
 }
 
 async function send_message_to_all_clients(msg) {
   const clients = await self.clients.matchAll()
   clients.forEach(client => {
-    send_message_to_client(client, msg)
+    const msg_chan = new MessageChannel()
+    client.postMessage(msg, [msg_chan.port2])
   })
 }
