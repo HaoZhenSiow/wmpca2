@@ -1,4 +1,4 @@
-const publicVapidKey = 'BHQtpN6mNSnAQ_7DJ4oMX8wROxg0Swy2wqP36wH3xovKdj31Fmh6L1EVPHfEY_ii7KxvQXm0Tt5s97l2P0UPOaI'
+const publicVapidKey = 'BDcT5LP8-14jkdYlS-O3jIiF2wd42V3BYjEkngD4ZMkvIFf5xTD5kiSLebJXRPzH54S75wS-Ms2tSc86c9b9V6M'
 
 window.addEventListener('load', function() {
   if ('serviceWorker' in navigator) {

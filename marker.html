@@ -24,20 +24,19 @@
 </body>
 <script>
   window.onload = function(){
-    const queryString = window.location.search,
-          urlParams = new URLSearchParams(queryString),
-          tour = urlParams.get('name'),
-          headerHeight = document.querySelector('header').getBoundingClientRect().height,
-          locations = {
+    const URL_PARAMS = new URLSearchParams(window.location.search),
+          TOUR = URL_PARAMS.get('name'),
+          HEADER_HEIGHT = document.querySelector('header').getBoundingClientRect().height,
+          LOCATIONS = {
             '4DAYS CLASSIC CAMBODIA': { lat: 11.568, lng: 104.912 } ,
             '8D6N Pleasant Korea & Busan': { lat: 36.5, lng: 128 } ,
             '13D10N BALKAN DREAMS': { lat: 40.916, lng: 10.982 }
           },
-          center = locations[tour] || { lat: 1.355, lng: 103.8 },
+          center = LOCATIONS[TOUR] || { lat: 1.355, lng: 103.8 },
           markers = localStorage.getItem('markers') ? JSON.parse(localStorage.getItem('markers')) : {}
   
-    document.querySelector('#tourName').innerHTML = tour     
-    document.querySelector('#gmap').style.height = innerHeight - headerHeight + 'px'
+    document.querySelector('#tourName').innerHTML = TOUR     
+    document.querySelector('#gmap').style.height = innerHeight - HEADER_HEIGHT + 'px'
 
     // navigator.online && initMap(center)
 
@@ -49,9 +48,9 @@
         zoom: 7
       })
 
-      markers[tour] = markers[tour] ? new Set(markers[tour]) : new Set()
+      markers[TOUR] = markers[TOUR] ? new Set(markers[TOUR]) : new Set()
 
-      markers[tour].forEach(marker => {
+      markers[TOUR].forEach(marker => {
         const title = marker.split(' ')[0],
               position = {lat: parseFloat(marker.split(' ')[1]), lng: parseFloat(marker.split(' ')[2])}
         createMarker({ map, title, position })
@@ -59,7 +58,7 @@
 
       map.addListener('click', e => {
         const title = prompt('Enter Marker Map')
-        markers[tour].add(title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
+        markers[TOUR].add(title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
         localStorage.setItem('markers', stringifyMarkers(markers))
         createMarker({ map, title, position: e.latLng })
       })
@@ -69,7 +68,7 @@
     function createMarker(payload) {
       const marker = new google.maps.Marker(payload)
       marker.addListener('click', function(e) {
-        markers[tour].delete(payload.title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
+        markers[TOUR].delete(payload.title + ' ' + e.latLng.lat() + ' ' + e.latLng.lng())
         localStorage.setItem('markers', stringifyMarkers(markers))
         this.setMap(null)
       })
